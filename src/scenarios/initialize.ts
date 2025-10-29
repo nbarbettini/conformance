@@ -1,13 +1,16 @@
 import http from 'http';
-import { ConformanceCheck } from '../../types.js';
-import { createClientInitializationCheck, createServerInfoCheck } from '../../checks.js';
+import { Scenario, ScenarioUrls, ConformanceCheck } from '../types.js';
+import { createClientInitializationCheck, createServerInfoCheck } from '../checks.js';
 
-export class InitializeTestServer {
+export class InitializeScenario implements Scenario {
+  name = 'initialize';
+  description = 'Tests MCP client initialization handshake';
+
   private server: http.Server | null = null;
   private checks: ConformanceCheck[] = [];
   private port: number = 0;
 
-  async start(): Promise<number> {
+  async start(): Promise<ScenarioUrls> {
     return new Promise((resolve, reject) => {
       this.server = http.createServer((req, res) => {
         this.handleRequest(req, res);
@@ -19,7 +22,9 @@ export class InitializeTestServer {
         const address = this.server!.address();
         if (address && typeof address === 'object') {
           this.port = address.port;
-          resolve(this.port);
+          resolve({
+            serverUrl: `http://localhost:${this.port}`
+          });
         } else {
           reject(new Error('Failed to get server address'));
         }

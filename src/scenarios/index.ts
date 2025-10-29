@@ -1,8 +1,8 @@
 import { Scenario } from '../types.js';
-import { initializeScenario } from './initialize/index.js';
+import { InitializeScenario } from './initialize.js';
 
 export const scenarios = new Map<string, Scenario>([
-  ['initialize', initializeScenario],
+  ['initialize', new InitializeScenario()],
 ]);
 
 export function registerScenario(name: string, scenario: Scenario): void {
