@@ -1,7 +1,11 @@
 import { Scenario } from '../types.js';
 import { InitializeScenario } from './initialize.js';
+import { ToolsCallScenario } from './tools_call.js';
 
-export const scenarios = new Map<string, Scenario>([['initialize', new InitializeScenario()]]);
+export const scenarios = new Map<string, Scenario>([
+    ['initialize', new InitializeScenario()],
+    ['tools-call', new ToolsCallScenario()]
+]);
 
 export function registerScenario(name: string, scenario: Scenario): void {
     scenarios.set(name, scenario);
