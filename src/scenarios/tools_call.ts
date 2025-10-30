@@ -1,0 +1,172 @@
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import type { Scenario, ConformanceCheck } from './types.js';
+import express from 'express';
+import { ScenarioUrls } from '../types.js';
+
+function createServer(checks: ConformanceCheck[]): express.Application {
+    const server = new Server(
+        {
+            name: 'add-numbers-server',
+            version: '1.0.0'
+        },
+        {
+            capabilities: {
+                tools: {}
+            }
+        }
+    );
+
+    server.setRequestHandler(ListToolsRequestSchema, async () => {
+        return {
+            tools: [
+                {
+                    name: 'add_numbers',
+                    description: 'Add two numbers together',
+                    inputSchema: {
+                        type: 'object',
+                        properties: {
+                            a: {
+                                type: 'number',
+                                description: 'First number'
+                            },
+                            b: {
+                                type: 'number',
+                                description: 'Second number'
+                            }
+                        },
+                        required: ['a', 'b']
+                    }
+                }
+            ]
+        };
+    });
+
+    server.setRequestHandler(CallToolRequestSchema, async request => {
+        if (request.params.name === 'add_numbers') {
+            const { a, b } = request.params.arguments as { a: number; b: number };
+            const result = a + b;
+
+            checks.push({
+                id: 'tool-add-numbers',
+                name: 'ToolAddNumbers',
+                description: 'Validates that the add_numbers tool works correctly',
+                status: result === a + b ? 'SUCCESS' : 'FAILURE',
+                timestamp: new Date().toISOString(),
+                specReferences: [
+                    {
+                        id: 'MCP-Tools',
+                        url: 'https://modelcontextprotocol.io/specification/2025-06-18/server/tools#calling-tools'
+                    }
+                ],
+                details: {
+                    a,
+                    b,
+                    result
+                }
+            });
+
+            return {
+                content: [
+                    {
+                        type: 'text',
+                        text: `The sum of ${a} and ${b} is ${result}`
+                    }
+                ]
+            };
+        }
+
+        throw new Error(`Unknown tool: ${request.params.name}`);
+    });
+
+    const app = express();
+    app.use(express.json());
+
+    app.use((req, res, next) => {
+        // Log incoming requests for debugging
+        // console.log(`Incoming request: ${req.method} ${req.url}`);
+        checks.push({
+            id: 'incoming-request',
+            name: 'IncomingRequest',
+            description: `Received ${req.method} request for ${req.url}`,
+            status: 'INFO',
+            timestamp: new Date().toISOString(),
+            details: {
+                body: JSON.stringify(req.body)
+            }
+        });
+        next();
+        checks.push({
+            id: 'outgoing-response',
+            name: 'OutgoingResponse',
+            // TODO: include MCP method?
+            description: `Sent ${res.statusCode} response`,
+            status: 'INFO',
+            timestamp: new Date().toISOString(),
+            details: {
+                // TODO: this isn't working
+                body: JSON.stringify(res.body)
+            }
+        });
+    });
+
+    app.post('/mcp', async (req, res) => {
+        const transport = new StreamableHTTPServerTransport({
+            sessionIdGenerator: undefined
+        });
+        await server.connect(transport);
+
+        await transport.handleRequest(req, res, req.body);
+    });
+
+    return app;
+}
+
+export class ToolsCallScenario implements Scenario {
+    name = 'tools_call';
+    private app: express.Application | null = null;
+    private httpServer: any = null;
+    private checks: ConformanceCheck[] = [];
+
+    async start(): Promise<ScenarioUrls> {
+        this.checks = [];
+        this.app = createServer(this.checks);
+        this.httpServer = this.app.listen(0);
+        const port = this.httpServer.address().port;
+        return { serverUrl: `http://localhost:${port}/mcp` };
+    }
+
+    async stop() {
+        if (this.httpServer) {
+            await new Promise(resolve => this.httpServer.close(resolve));
+            this.httpServer = null;
+        }
+        this.app = null;
+    }
+
+    getChecks(): ConformanceCheck[] {
+        const expectedSlugs = ['tool-add-numbers'];
+        // add a failure if not in there already
+        for (const slug of expectedSlugs) {
+            if (!this.checks.find(c => c.id === slug)) {
+                // TODO: this is duplicated from above, refactor
+                this.checks.push({
+                    id: slug,
+                    name: `ToolAddNumbers`,
+                    description: `Validates that the add_numbers tool works correctly`,
+                    status: 'FAILURE',
+                    timestamp: new Date().toISOString(),
+                    details: { message: 'Tool was not called by client' },
+                    specReferences: [
+                        {
+                            id: 'MCP-Tools',
+                            url: 'https://modelcontextprotocol.io/specification/2025-06-18/server/tools#calling-tools'
+                        }
+                    ]
+                });
+            }
+        }
+        return this.checks;
+    }
+}
