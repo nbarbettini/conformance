@@ -146,12 +146,14 @@ async function main(): Promise<void> {
     try {
         const result = await runConformanceTest(command, scenario);
 
+        const denominator = result.checks.filter(c => c.status === 'SUCCESS' || c.status == 'FAILURE').length;
         const passed = result.checks.filter(c => c.status === 'SUCCESS').length;
         const failed = result.checks.filter(c => c.status === 'FAILURE').length;
 
+        console.log(`Checks:\n${JSON.stringify(result.checks, null, 2)}`);
+
         console.log(`\nTest Results:`);
-        console.log(`Passed: ${passed}/${result.checks.length}`);
-        console.log(`Failed: ${failed}/${result.checks.length}`);
+        console.log(`Passed: ${passed}/${denominator}, ${failed} failed`);
 
         if (failed > 0) {
             console.log('\nFailed Checks:');
