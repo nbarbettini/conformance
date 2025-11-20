@@ -13,6 +13,7 @@ import {
   ResourceTemplate
 } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { ElicitResultSchema } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import express from 'express';
 import cors from 'cors';
@@ -369,9 +370,7 @@ function createMcpServer() {
               }
             }
           },
-          z
-            .object({ method: z.literal('elicitation/create') })
-            .passthrough() as any
+          ElicitResultSchema
         );
 
         const elicitResult = result as any;
@@ -445,9 +444,7 @@ function createMcpServer() {
               }
             }
           },
-          z
-            .object({ method: z.literal('elicitation/create') })
-            .passthrough() as any
+          ElicitResultSchema
         );
 
         const elicitResult = result as any;
@@ -544,9 +541,7 @@ function createMcpServer() {
               }
             }
           },
-          z
-            .object({ method: z.literal('elicitation/create') })
-            .passthrough() as any
+          ElicitResultSchema
         );
 
         const elicitResult = result as any;
