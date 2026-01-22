@@ -35,7 +35,6 @@ export class AuthUnauthorizedResponseScenario implements ClientScenario {
 **Expected Response**:
 - Status: 401
 - Headers: WWW-Authenticate: Bearer ...
-- Body: JSON (OAuth error or JSON-RPC error format)
 
 **Example WWW-Authenticate**:
 \`\`\`
@@ -226,32 +225,33 @@ WWW-Authenticate: Bearer realm="mcp", scope="mcp:read mcp:write"
     }
 
     // Check 3: Response body is valid JSON
-    if (typeof response.body === 'object' && response.body !== null) {
-      checks.push({
-        id: 'auth-401-response-json',
-        name: 'Response Is JSON',
-        description: '401 response body is valid JSON',
-        status: 'SUCCESS',
-        timestamp: timestamp(),
-        specReferences: [ServerAuthSpecReferences.MCP_AUTH_ERROR_HANDLING],
-        details: {
-          bodyType: Array.isArray(response.body) ? 'array' : 'object'
-        }
-      });
-    } else if (response.status === 401) {
-      checks.push({
-        id: 'auth-401-response-json',
-        name: 'Response Is JSON',
-        description: '401 response body is valid JSON',
-        status: 'WARNING',
-        timestamp: timestamp(),
-        errorMessage: 'Response body is not valid JSON',
-        specReferences: [ServerAuthSpecReferences.MCP_AUTH_ERROR_HANDLING],
-        details: {
-          rawBody: response.rawBody.substring(0, 200)
-        }
-      });
-    }
+    // DISABLED: This is not actually mandated by the MCP spec
+    // if (typeof response.body === 'object' && response.body !== null) {
+    //   checks.push({
+    //     id: 'auth-401-response-json',
+    //     name: 'Response Is JSON',
+    //     description: '401 response body is valid JSON',
+    //     status: 'SUCCESS',
+    //     timestamp: timestamp(),
+    //     specReferences: [ServerAuthSpecReferences.MCP_AUTH_ERROR_HANDLING],
+    //     details: {
+    //       bodyType: Array.isArray(response.body) ? 'array' : 'object'
+    //     }
+    //   });
+    // } else if (response.status === 401) {
+    //   checks.push({
+    //     id: 'auth-401-response-json',
+    //     name: 'Response Is JSON',
+    //     description: '401 response body is valid JSON',
+    //     status: 'WARNING',
+    //     timestamp: timestamp(),
+    //     errorMessage: 'Response body is not valid JSON',
+    //     specReferences: [ServerAuthSpecReferences.MCP_AUTH_ERROR_HANDLING],
+    //     details: {
+    //       rawBody: response.rawBody.substring(0, 200)
+    //     }
+    //   });
+    // }
 
     return checks;
   }
