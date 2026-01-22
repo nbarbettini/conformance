@@ -33,6 +33,10 @@ import { ElicitationDefaultsScenario } from './server/elicitation-defaults';
 import { ElicitationEnumsScenario } from './server/elicitation-enums';
 import { ServerSSEPollingScenario } from './server/sse-polling';
 import { ServerSSEMultipleStreamsScenario } from './server/sse-multiple-streams';
+import { ServerOriginValidationScenario } from './server/origin-validation';
+import { ServerInvalidJsonRpcInputScenario } from './server/invalid-jsonrpc-input';
+import { ServerSessionIdAsciiScenario } from './server/session-id-ascii';
+import { ServerProtocolVersionValidationScenario } from './server/protocol-version-validation';
 
 import {
   ResourcesListScenario,
@@ -113,6 +117,12 @@ const allClientScenariosList: ClientScenario[] = [
   // SSE Polling scenarios (SEP-1699)
   new ServerSSEPollingScenario(),
   new ServerSSEMultipleStreamsScenario(),
+
+  // Transport scenarios
+  new ServerOriginValidationScenario(),
+  new ServerInvalidJsonRpcInputScenario(),
+  new ServerSessionIdAsciiScenario(),
+  new ServerProtocolVersionValidationScenario(),
 
   // Elicitation scenarios (SEP-1330) - pending
   new ElicitationEnumsScenario(),

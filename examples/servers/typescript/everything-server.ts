@@ -1053,10 +1053,55 @@ function isInitializeRequest(body: any): boolean {
   return body?.method === 'initialize';
 }
 
+function getRequestOrigin(req: express.Request): string | undefined {
+  const host = req.get('host');
+  if (!host) {
+    return undefined;
+  }
+  return `${req.protocol}://${host}`;
+}
+
+function isValidOriginHeader(
+  originHeader: string,
+  requestOrigin: string | undefined
+): boolean {
+  if (!requestOrigin) {
+    return false;
+  }
+  try {
+    return new URL(originHeader).origin === requestOrigin;
+  } catch {
+    return false;
+  }
+}
+
 // ===== EXPRESS APP =====
 
 const app = express();
 app.use(express.json());
+
+// Validate Origin header to prevent DNS rebinding (Streamable HTTP transport).
+app.use((req, res, next) => {
+  const originHeader = req.get('origin');
+  if (!originHeader) {
+    next();
+    return;
+  }
+
+  const requestOrigin = getRequestOrigin(req);
+  if (!isValidOriginHeader(originHeader, requestOrigin)) {
+    res.status(403).json({
+      jsonrpc: '2.0',
+      error: {
+        code: -32000,
+        message: 'Invalid origin'
+      }
+    });
+    return;
+  }
+
+  next();
+});
 
 // Configure CORS to expose Mcp-Session-Id header for browser-based clients
 app.use(
