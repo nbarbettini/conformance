@@ -9,7 +9,7 @@ describe('ServerProtocolVersionValidationScenario', () => {
   });
 
   it('returns SUCCESS when server rejects invalid protocol version', async () => {
-    const fetchMock = vi.fn(async (_url: string, options?: RequestInit) => {
+    const fetchMock = vi.fn(async (_url: string, _options?: RequestInit) => {
       return new Response('Bad Request', { status: 400 });
     });
 

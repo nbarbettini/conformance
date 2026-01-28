@@ -9,7 +9,7 @@ describe('ServerOriginValidationScenario', () => {
   });
 
   it('returns SUCCESS when server responds 403 to invalid Origin', async () => {
-    const fetchMock = vi.fn(async (_url: string, options?: RequestInit) => {
+    const fetchMock = vi.fn(async (_url: string, _options?: RequestInit) => {
       return new Response(
         JSON.stringify({
           jsonrpc: '2.0',

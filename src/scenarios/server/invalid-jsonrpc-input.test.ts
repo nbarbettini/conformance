@@ -9,7 +9,7 @@ describe('ServerInvalidJsonRpcInputScenario', () => {
   });
 
   it('returns SUCCESS when server rejects JSON-RPC response input', async () => {
-    const fetchMock = vi.fn(async (_url: string, options?: RequestInit) => {
+    const fetchMock = vi.fn(async (_url: string, _options?: RequestInit) => {
       return new Response('Bad Request', { status: 400 });
     });
 
