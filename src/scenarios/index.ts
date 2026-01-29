@@ -36,6 +36,14 @@ import { ServerSSEMultipleStreamsScenario } from './server/sse-multiple-streams'
 import { ServerOriginValidationScenario } from './server/origin-validation';
 import { ServerInvalidJsonRpcInputScenario } from './server/invalid-jsonrpc-input';
 import { ServerResultResponseIdScenario } from './server/result-response-id';
+import { ServerErrorResponseIdScenario } from './server/error-response-id';
+import { ServerErrorResponseFieldsScenario } from './server/error-response-fields';
+import { ServerErrorResponseCodeIntegerScenario } from './server/error-response-code-integer';
+import { ServerNotificationNoResponseScenario } from './server/notification-no-response';
+import { ServerMetaFieldAcceptanceScenario } from './server/meta-field-acceptance';
+import { ServerNotificationAccepted202Scenario } from './server/notification-accepted-202';
+import { ServerPostRequestContentTypeScenario } from './server/post-request-content-type';
+import { ServerGetSseContentTypeScenario } from './server/get-sse-content-type';
 import { ServerSessionIdAsciiScenario } from './server/session-id-ascii';
 import { ServerProtocolVersionValidationScenario } from './server/protocol-version-validation';
 
@@ -123,6 +131,14 @@ const allClientScenariosList: ClientScenario[] = [
   new ServerOriginValidationScenario(),
   new ServerInvalidJsonRpcInputScenario(),
   new ServerResultResponseIdScenario(),
+  new ServerErrorResponseIdScenario(),
+  new ServerErrorResponseFieldsScenario(),
+  new ServerErrorResponseCodeIntegerScenario(),
+  new ServerNotificationNoResponseScenario(),
+  new ServerMetaFieldAcceptanceScenario(),
+  new ServerNotificationAccepted202Scenario(),
+  new ServerPostRequestContentTypeScenario(),
+  new ServerGetSseContentTypeScenario(),
   new ServerSessionIdAsciiScenario(),
   new ServerProtocolVersionValidationScenario(),
 
