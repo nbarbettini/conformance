@@ -4,7 +4,7 @@
  */
 
 import { ClientScenario, ConformanceCheck } from '../../types.js';
-import { authFetch } from './auth/helpers/auth-fetch.js';
+import { createSessionFetch } from './helpers/session-fetch.js';
 
 const INVALID_PROTOCOL_VERSION = 'invalid-version';
 
@@ -22,22 +22,15 @@ export class ServerProtocolVersionValidationScenario implements ClientScenario {
 
     const jsonRpcRequest = {
       jsonrpc: '2.0',
-      method: 'initialize',
-      params: {
-        protocolVersion: '2025-11-25',
-        capabilities: {},
-        clientInfo: {
-          name: 'conformance-protocol-version-test',
-          version: '1.0.0'
-        }
-      },
+      method: 'ping',
       id: 1
     };
 
-    let response: Awaited<ReturnType<typeof authFetch>>;
+    const sessionFetch = createSessionFetch(serverUrl);
+    let response: Awaited<ReturnType<typeof sessionFetch>>;
 
     try {
-      response = await authFetch(serverUrl, {
+      response = await sessionFetch({
         method: 'POST',
         headers: {
           'mcp-protocol-version': INVALID_PROTOCOL_VERSION
