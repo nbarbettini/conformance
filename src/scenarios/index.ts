@@ -35,6 +35,7 @@ import { ServerSSEPollingScenario } from './server/sse-polling';
 import { ServerSSEMultipleStreamsScenario } from './server/sse-multiple-streams';
 import { ServerOriginValidationScenario } from './server/origin-validation';
 import { ServerInvalidJsonRpcInputScenario } from './server/invalid-jsonrpc-input';
+import { ServerNotificationNoResponseScenario } from './server/notification-no-response';
 import { ServerSessionIdAsciiScenario } from './server/session-id-ascii';
 import { ServerProtocolVersionValidationScenario } from './server/protocol-version-validation';
 
@@ -121,6 +122,7 @@ const allClientScenariosList: ClientScenario[] = [
   // Transport scenarios
   new ServerOriginValidationScenario(),
   new ServerInvalidJsonRpcInputScenario(),
+  new ServerNotificationNoResponseScenario(),
   new ServerSessionIdAsciiScenario(),
   new ServerProtocolVersionValidationScenario(),
 
