@@ -28,6 +28,7 @@ import {
 } from './server/tools';
 
 import { JsonSchema2020_12Scenario } from './server/json-schema-2020-12';
+import { JsonRpcRequestValidationScenario } from './server/jsonrpc-request-validation';
 
 import { ElicitationDefaultsScenario } from './server/elicitation-defaults';
 import { ElicitationEnumsScenario } from './server/elicitation-enums';
@@ -82,6 +83,7 @@ const allClientScenariosList: ClientScenario[] = [
   // Utilities scenarios
   new LoggingSetLevelScenario(),
   new PingScenario(),
+  new JsonRpcRequestValidationScenario(),
   new CompletionCompleteScenario(),
 
   // Tools scenarios
