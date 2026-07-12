@@ -27,6 +27,8 @@ import { AuthPrmResourceValidationScenario } from './scenarios/prm-resource-vali
 import { AuthDiscoveryMechanismScenario } from './scenarios/discovery-mechanism';
 import { AuthAsTokenAuthMethodsScenario } from './scenarios/as-token-auth-methods';
 import { AuthAsGrantTypesScenario } from './scenarios/as-grant-types';
+import { AuthTokenValidationSmokeScenario } from './scenarios/token-validation-smoke';
+import { AuthDcrEndpointValidationScenario } from './scenarios/dcr-endpoint-validation';
 
 /**
  * All server OAuth conformance scenarios.
@@ -72,7 +74,11 @@ export const serverAuthScenarios: ClientScenario[] = [
 
   // HTTP-level checks (independent)
   new AuthUnauthorizedResponseScenario(),
-  new AuthWWWAuthenticateHeaderScenario()
+  new AuthWWWAuthenticateHeaderScenario(),
+  new AuthTokenValidationSmokeScenario(),
+
+  // DCR endpoint observability checks (requires AS metadata)
+  new AuthDcrEndpointValidationScenario()
 ];
 
 /**
@@ -102,6 +108,8 @@ export { AuthPrmResourceValidationScenario } from './scenarios/prm-resource-vali
 export { AuthDiscoveryMechanismScenario } from './scenarios/discovery-mechanism';
 export { AuthAsTokenAuthMethodsScenario } from './scenarios/as-token-auth-methods';
 export { AuthAsGrantTypesScenario } from './scenarios/as-grant-types';
+export { AuthTokenValidationSmokeScenario } from './scenarios/token-validation-smoke';
+export { AuthDcrEndpointValidationScenario } from './scenarios/dcr-endpoint-validation';
 
 // Re-export spec references
 export { ServerAuthSpecReferences } from './spec-references';

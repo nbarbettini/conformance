@@ -35,7 +35,10 @@ import { ServerSSEPollingScenario } from './server/sse-polling';
 import { ServerSSEMultipleStreamsScenario } from './server/sse-multiple-streams';
 import { ServerOriginValidationScenario } from './server/origin-validation';
 import { ServerInvalidJsonRpcInputScenario } from './server/invalid-jsonrpc-input';
+import { ServerJsonRpcResponseValidationScenario } from './server/jsonrpc-response-validation';
+import { ServerMetaFieldAcceptanceScenario } from './server/meta-field-acceptance';
 import { ServerNotificationNoResponseScenario } from './server/notification-no-response';
+import { ServerSessionDeleteSupportScenario } from './server/session-delete-support';
 import { ServerSessionIdAsciiScenario } from './server/session-id-ascii';
 import { ServerProtocolVersionValidationScenario } from './server/protocol-version-validation';
 
@@ -122,7 +125,10 @@ const allClientScenariosList: ClientScenario[] = [
   // Transport scenarios
   new ServerOriginValidationScenario(),
   new ServerInvalidJsonRpcInputScenario(),
+  new ServerJsonRpcResponseValidationScenario(),
+  new ServerMetaFieldAcceptanceScenario(),
   new ServerNotificationNoResponseScenario(),
+  new ServerSessionDeleteSupportScenario(),
   new ServerSessionIdAsciiScenario(),
   new ServerProtocolVersionValidationScenario(),
 
