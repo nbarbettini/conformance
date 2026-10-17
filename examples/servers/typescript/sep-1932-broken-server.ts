@@ -13,21 +13,32 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import express, { type Request, type Response } from 'express';
 import { z } from 'zod';
+import { handleDraftWire, isDraftWireRequest } from './sep-1932-draft-wire.js';
+
+const SERVER_INFO = { name: 'sep-1932-broken-server', version: '1.0.0' };
+
+const ECHO_TOOL = {
+  name: 'echo',
+  description: 'Echo the input back',
+  inputSchema: {
+    type: 'object',
+    properties: { message: { type: 'string' } },
+    required: ['message']
+  },
+  call: (args: Record<string, unknown>) => [
+    { type: 'text' as const, text: `Echo: ${String(args.message ?? '')}` }
+  ]
+};
 
 function createMcpServer(): McpServer {
-  const server = new McpServer({
-    name: 'sep-1932-broken-server',
-    version: '1.0.0'
-  });
+  const server = new McpServer(SERVER_INFO);
   server.registerTool(
-    'echo',
+    ECHO_TOOL.name,
     {
-      description: 'Echo the input back',
+      description: ECHO_TOOL.description,
       inputSchema: { message: z.string() }
     },
-    async ({ message }) => ({
-      content: [{ type: 'text', text: `Echo: ${message}` }]
-    })
+    async ({ message }) => ({ content: ECHO_TOOL.call({ message }) })
   );
   return server;
 }
@@ -38,6 +49,12 @@ app.use(express.json());
 // NO DPoP validation: every request is handled regardless of the (missing,
 // malformed, replayed, or unbound) DPoP proof or access token.
 app.post('/mcp', async (req: Request, res: Response) => {
+  // Same draft-wire dispatch as the compliant fixture, still with no DPoP
+  // validation, so the negative checks have a 2xx baseline to grade against.
+  if (isDraftWireRequest(req)) {
+    handleDraftWire(req, res, { serverInfo: SERVER_INFO, tools: [ECHO_TOOL] });
+    return;
+  }
   try {
     const server = createMcpServer();
     const transport = new StreamableHTTPServerTransport({

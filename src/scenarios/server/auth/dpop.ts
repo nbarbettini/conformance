@@ -37,6 +37,7 @@ import {
   type TokenIssuerKey
 } from '../../client/auth/helpers/dpopToken';
 import { SpecReferences } from './spec-references';
+import { UNSUPPORTED_PROTOCOL_VERSION } from '../../../spec-types/draft';
 
 const SPEC_REFERENCES = [
   SpecReferences.SEP_1932_DPOP,
@@ -90,6 +91,37 @@ interface Response {
   date: number | undefined;
   /** `error` auth-param of the DPoP challenge, if that challenge carries one. */
   dpopError: string | undefined;
+  /** JSON-RPC error in the body, if the body is a JSON-RPC error. */
+  jsonRpcError: { code: number; message: string } | undefined;
+}
+
+/**
+ * Explain why the positive probe was not accepted. A 401 means the server
+ * evaluated the credentials and refused them: that is the DPoP result. Any
+ * other 4xx carrying a JSON-RPC error means the request never got that far,
+ * most often because the server does not speak the protocol version the probe
+ * used (SDKs that predate the stateless wire answer `server/discover` with a
+ * generic -32000; a draft-aware server answers -32022). Name that once here,
+ * instead of letting 20-odd gated checks read like DPoP defects.
+ */
+function describeRejection(
+  res: Response,
+  probeMethod: string,
+  specVersion: string
+): string {
+  const base = `Expected 2xx, got ${res.statusCode}`;
+  const err = res.jsonRpcError;
+  if (res.statusCode === 401 || err === undefined) return base;
+  const why =
+    err.code === UNSUPPORTED_PROTOCOL_VERSION
+      ? `does not support protocol version ${specVersion}`
+      : `answered the ${probeMethod} probe with JSON-RPC error ${err.code} ` +
+        `("${err.message}") instead of an authentication result, which ` +
+        `usually means it does not support protocol version ${specVersion}`;
+  return (
+    `${base}: the server ${why}, so the DPoP proof was never evaluated. ` +
+    `Rerun with --spec-version set to a version the server supports.`
+  );
 }
 
 // Proof defects (§4.3) vs token defects (RFC 6750 `invalid_token`). `either`
@@ -965,11 +997,23 @@ server-provided nonce flow.`;
     const readHttp = async (
       res: Awaited<ReturnType<typeof request>>
     ): Promise<Response> => {
-      // Drain the body so the socket can be reused / freed.
+      // Read the body (also drains it so the socket can be reused / freed) and
+      // keep only a JSON-RPC error code, if there is one.
+      let jsonRpcError: Response['jsonRpcError'];
       try {
-        await res.body.text();
+        const parsed = JSON.parse(await res.body.text()) as {
+          error?: { code?: unknown; message?: unknown };
+        };
+        const code = parsed?.error?.code;
+        if (typeof code === 'number') {
+          const message = parsed.error?.message;
+          jsonRpcError = {
+            code,
+            message: typeof message === 'string' ? message.slice(0, 200) : ''
+          };
+        }
       } catch {
-        /* ignore */
+        /* not JSON, or no body */
       }
       // undici may surface a repeated header as string[]; coalesce so challenge
       // matching sees every advertised scheme.
@@ -992,7 +1036,8 @@ server-provided nonce flow.`;
         wwwAuthenticate,
         dpopNonce,
         date,
-        dpopError: dpopChallengeError(wwwAuthenticate)
+        dpopError: dpopChallengeError(wwwAuthenticate),
+        jsonRpcError
       };
     };
 
@@ -1144,7 +1189,13 @@ server-provided nonce flow.`;
           'AcceptsValidProof',
           'Server accepts a valid DPoP-bound access token and proof',
           positiveAccepted ? 'SUCCESS' : 'FAILURE',
-          positiveAccepted ? undefined : `Expected 2xx, got ${res.statusCode}`,
+          positiveAccepted
+            ? undefined
+            : describeRejection(
+                res,
+                probeBody(specVersion).method,
+                specVersion
+              ),
           { case: 'valid', statusCode: res.statusCode }
         )
       );

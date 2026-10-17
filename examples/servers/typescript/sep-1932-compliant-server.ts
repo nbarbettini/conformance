@@ -39,6 +39,7 @@ import express, { type Request, type Response } from 'express';
 import { z } from 'zod';
 import * as jose from 'jose';
 import { createHash } from 'node:crypto';
+import { handleDraftWire, isDraftWireRequest } from './sep-1932-draft-wire.js';
 
 const ISSUER_JWK = JSON.parse(process.env.DPOP_ISSUER_JWK || '{}');
 const ISSUER = process.env.DPOP_ISSUER || 'https://auth.example.com';
@@ -374,7 +375,28 @@ function send401(req: Request, res: Response, f: Failure): void {
   });
 }
 
+const SERVER_INFO = { name: 'sep-1932-compliant-server', version: '1.0.0' };
+
+const ECHO_TOOL = {
+  name: 'echo',
+  description: 'Echo the input back',
+  inputSchema: {
+    type: 'object',
+    properties: { message: { type: 'string' } },
+    required: ['message']
+  },
+  call: (args: Record<string, unknown>) => [
+    { type: 'text' as const, text: `Echo: ${String(args.message ?? '')}` }
+  ]
+};
+
 async function handleMcp(req: Request, res: Response): Promise<void> {
+  // The draft (2026-07-28) wire has no initialize handshake; the pinned SDK
+  // transport does not speak it, so serve it directly (see the module doc).
+  if (isDraftWireRequest(req)) {
+    handleDraftWire(req, res, { serverInfo: SERVER_INFO, tools: [ECHO_TOOL] });
+    return;
+  }
   try {
     const server = createMcpServer();
     const transport = new StreamableHTTPServerTransport({
@@ -397,19 +419,14 @@ async function handleMcp(req: Request, res: Response): Promise<void> {
 }
 
 function createMcpServer(): McpServer {
-  const server = new McpServer({
-    name: 'sep-1932-compliant-server',
-    version: '1.0.0'
-  });
+  const server = new McpServer(SERVER_INFO);
   server.registerTool(
-    'echo',
+    ECHO_TOOL.name,
     {
-      description: 'Echo the input back',
+      description: ECHO_TOOL.description,
       inputSchema: { message: z.string() }
     },
-    async ({ message }) => ({
-      content: [{ type: 'text', text: `Echo: ${message}` }]
-    })
+    async ({ message }) => ({ content: ECHO_TOOL.call({ message }) })
   );
   return server;
 }
