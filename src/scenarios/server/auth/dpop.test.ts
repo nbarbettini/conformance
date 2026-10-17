@@ -8,7 +8,7 @@ import {
   dpopChallengeError,
   protectedResourceMetadataFallbacks
 } from './dpop';
-import type { ConformanceCheck } from '../../../types';
+import { DRAFT_PROTOCOL_VERSION, type ConformanceCheck } from '../../../types';
 
 const WINDOWS = process.platform === 'win32';
 
@@ -454,6 +454,38 @@ describe('DPoP server validation scenario', () => {
     ).toBe(true);
     // Compliant server does not require a nonce → nonce flow is optional/SKIPPED.
     expect(byId(checks, 'sep-1932-server-nonce')[0].status).toBe('SKIPPED');
+  }, 30000);
+
+  // The CLI defaults to DRAFT_PROTOCOL_VERSION, whose probe is `server/discover`
+  // rather than `initialize`. `testContext` defaults to LATEST_SPEC_VERSION, so
+  // without these two cases the stateless path is only ever exercised by hand.
+  it('passes every check against a compliant server on the draft (stateless) wire', async () => {
+    const checks = await new DPoPServerValidationScenario().run(
+      testContext(url(ports.compliant), DRAFT_PROTOCOL_VERSION)
+    );
+
+    const failures = checks.filter((c) => c.status === 'FAILURE');
+    expect(failures.map((c) => `${c.id}/${c.name}: ${c.errorMessage}`)).toEqual(
+      []
+    );
+    expect(
+      byId(checks, 'sep-1932-server-validate-proof').find(
+        (c) => c.name === 'AcceptsValidProof'
+      )?.status
+    ).toBe('SUCCESS');
+    expect(checks.some((c) => c.status === 'WARNING')).toBe(false);
+  }, 30000);
+
+  it('emits FAILURE against a server that does not validate DPoP on the draft wire', async () => {
+    const checks = await new DPoPServerValidationScenario().run(
+      testContext(url(ports.broken), DRAFT_PROTOCOL_VERSION)
+    );
+    expect(
+      byId(checks, 'sep-1932-server-validate-proof').find(
+        (c) => c.name === 'AcceptsValidProof'
+      )?.status
+    ).toBe('SUCCESS');
+    expect(checks.some((c) => c.status === 'FAILURE')).toBe(true);
   }, 30000);
 
   it('emits FAILURE against a server that does not validate DPoP', async () => {
